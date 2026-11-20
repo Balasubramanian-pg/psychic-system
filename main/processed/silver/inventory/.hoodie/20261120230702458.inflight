@@ -1,0 +1,20 @@
+{
+  "partitionToWriteStats" : {
+    "" : [ {
+      "fileId" : "",
+      "path" : null,
+      "cdcStats" : null,
+      "prevCommit" : "null",
+      "numWrites" : 0,
+      "numDeletes" : 0,
+      "numUpdateWrites" : 0,
+      "numInserts" : 0,
+      "totalWriteBytes" : 0,
+      "totalWriteErrors" : 0,
+      "tempPath" : null,
+      "partitionPath" : null,
+      "totalLogRecords" : 0,
+      "totalLogFilesCompacted" : 0,
+      "totalLogSizeCompacted" : 0,
+      "totalUpdatedRecordsCompacted" : 0,
+      "to
