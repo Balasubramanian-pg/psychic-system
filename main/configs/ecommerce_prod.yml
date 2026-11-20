@@ -35,4 +35,39 @@ hudi:
     table_name: "orders_hudi"
     record_key: "order_id"
     precombine_field: "ordering_key"
-    table_type: "COPY_ON
+    table_type: "COPY_ON_WRITE"
+  inventory:
+    table_name: "inventory_hudi"
+    record_key: "product_id"
+    precombine_field: "ordering_key"
+    table_type: "COPY_ON_WRITE"
+  movements:
+    table_name: "inventory_movements_hudi"
+    record_key: "movement_id"
+    precombine_field: "ordering_key"
+    table_type: "COPY_ON_WRITE"
+
+validation_rules:
+  valid_order_statuses:
+    - "PLACED"
+    - "CONFIRMED"
+    - "SHIPPED"
+    - "DELIVERED"
+    - "CANCELLED"
+  valid_payment_statuses:
+    - "PENDING"
+    - "PAID"
+    - "FAILED"
+    - "REFUNDED"
+  valid_movement_types:
+    - "PURCHASE"
+    - "RETURN"
+    - "RESTOCK"
+    - "DAMAGE"
+  valid_categories:
+    - "APPAREL"
+    - "ELECTRONICS"
+    - "SPORTS"
+    - "HOME"
+    - "BOOKS"
+  low_stock_threshold: 20
