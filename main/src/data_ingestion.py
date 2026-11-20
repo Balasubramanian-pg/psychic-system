@@ -86,4 +86,60 @@ def ingest_to_bronze(
     bronze_df = (
         raw_df.withColumn("_ingestion_timestamp", F.current_timestamp())
         .withColumn("_source_file", F.lit(input_path))
-        .withColumn("_batch_id", F.l
+        .withColumn("_batch_id", F.lit(batch_label))
+    )
+
+    profile_dataframe(bronze_df, batch_label)
+    bronze_df.write.mode("overwrite").parquet(output_path)
+    print(f"[BRONZE WRITTEN] Successfully stored in Bronze Parquet: {output_path}")
+    return bronze_df
+
+
+def run_ingestion(config_path: str) -> None:
+    config = load_config(config_path)
+    spark = get_spark_session("Ecommerce_Bronze_Ingestion")
+
+    raw_paths = config["paths"]["raw"]
+    bronze_paths = config["paths"]["bronze"]
+
+    print(">>> Starting Bronze Layer Ingestion Pipeline...")
+    ingest_to_bronze(
+        spark,
+        raw_paths["orders_initial"],
+        bronze_paths["orders_initial"],
+        ORDERS_RAW_SCHEMA,
+        "orders_initial",
+    )
+    ingest_to_bronze(
+        spark,
+        raw_paths["orders_updates"],
+        bronze_paths["orders_updates"],
+        ORDERS_RAW_SCHEMA,
+        "orders_updates",
+    )
+    ingest_to_bronze(
+        spark,
+        raw_paths["inventory_initial"],
+        bronze_paths["inventory_initial"],
+        INVENTORY_RAW_SCHEMA,
+        "inventory_initial",
+    )
+    ingest_to_bronze(
+        spark,
+        raw_paths["inventory_movements"],
+        bronze_paths["inventory_movements"],
+        MOVEMENTS_RAW_SCHEMA,
+        "inventory_movements",
+    )
+    print("\n>>> Bronze Layer Ingestion Complete.")
+
+    spark.stop()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Bronze Layer Ingestion & Profiling")
+    parser.add_argument(
+        "--config", default="configs/ecommerce_prod.yml", help="Path to YAML config"
+    )
+    args = parser.parse_args()
+    run_ingestion(args.config)
