@@ -247,4 +247,174 @@
       background: rgba(0, 0, 0, 0.85);
       z-index: 1000;
       justify-content: center;
-      alig
+      align-items: center;
+      padding: 2rem;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      max-width: 90%;
+      max-height: 90%;
+      position: relative;
+    }
+    .modal-content img {
+      max-width: 100%;
+      max-height: 85vh;
+      border-radius: 8px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      border: 1px solid #374151;
+    }
+    .modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Verification & Inspection Portal</div>
+  <h1>E-Commerce Medallion Lakehouse</h1>
+  <p class="subtitle">
+    Apache Spark 3.5.3 & Apache Hudi 0.15.0 (Copy-On-Write) implementation verified natively on Windows 11.
+  </p>
+  <div class="quick-links">
+    <a href="#screenshots" class="btn btn-primary">📸 View All Screenshots</a>
+    <a href="#hudi" class="btn btn-secondary">⚡ Hudi Silver Tables</a>
+    <a href="#gold" class="btn btn-secondary">📊 Gold Analytics</a>
+    <a href="REPORT.md" target="_blank" class="btn btn-secondary">📄 View REPORT.md</a>
+    <a href="Assignment_1_Lakehouse_Report.docx" download class="btn btn-secondary">📥 Download .DOCX Report</a>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Status Cards -->
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">
+        <span class="status-dot"></span>
+        Hudi Engine Status
+      </div>
+      <div class="info-row">
+        <span class="info-label">Apache Hudi</span>
+        <span class="info-val">v0.15.0 (Bundle Jar)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Apache Spark</span>
+        <span class="info-val">v3.5.3 (PySpark)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Java Runtime</span>
+        <span class="info-val">OpenJDK 11.0.25 (x64)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Hadoop Winutils</span>
+        <span class="info-val">Installed (C:\Users\ASUS\tools\hadoop)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Table Storage Type</span>
+        <span class="info-val">COPY_ON_WRITE (COW)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="status-dot"></span>
+        Live Pipeline Run Result
+      </div>
+      <div class="info-row">
+        <span class="info-label">data_ingestion.py</span>
+        <span class="info-val" style="color:var(--green)">✓ Completed (Exit Code 0)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">lakehouse_implementation.py</span>
+        <span class="info-val" style="color:var(--green)">✓ 2 Commits Written</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">time_travel.py</span>
+        <span class="info-val" style="color:var(--green)">✓ Time Travel Verified</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">consumption_analytics.py</span>
+        <span class="info-val" style="color:var(--green)">✓ 6 Gold Reports Generated</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">VS Code Workspace</span>
+        <span class="info-val" style="color:var(--accent)">Opened on Device</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="status-dot"></span>
+        Dataset & Record Metrics
+      </div>
+      <div class="info-row">
+        <span class="info-label">Initial Orders</span>
+        <span class="info-val">1,000 records</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Orders Updates</span>
+        <span class="info-val">220 incremental records</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Initial Inventory</span>
+        <span class="info-val">150 SKU records</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Stock Movements</span>
+        <span class="info-val">320 physical movements</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Quarantine Volume</span>
+        <span class="info-val" style="color:var(--yellow)">Zero Silent Drops (Logged)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screenshots Gallery -->
+  <h2 class="section-title" id="screenshots">
+    📸 Milestone Screenshots (Ready & Embedded)
+  </h2>
+  <p style="color:var(--text-muted); margin-bottom: 1.5rem;">
+    Click on any screenshot to open in high-resolution full view. These 5 screenshots are fully embedded in <code>Assignment_1_Lakehouse_Report.docx</code> and <code>REPORT.md</code>.
+  </p>
+
+  <div class="screenshots-grid">
+    <!-- Screenshot 1 -->
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <div class="screenshot-title">Figure 1: Bronze Ingestion & Profiling</div>
+        <div class="screenshot-tag">Milestone 1</div>
+      </div>
+      <div class="screenshot-img-wrap" onclick="openModal('screenshots/01_data_ingestion_and_profiling.png', 'Figure 1: Bronze Ingestion & Data Profiling')">
+        <img src="screenshots/01_data_ingestion_and_profiling.png" alt="Bronze Ingestion Screenshot">
+      </div>
+      <div class="screenshot-desc">
+        Demonstrates permissive string schema capture, ingestion lineage metadata (_ingestion_timestamp, _source_file, _batch_id), profiling matrix, and Parquet persistence.
+      </div>
+    </div>
+
+    <!-- Screenshot 2 -->
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <div class="screenshot-title">Figure 2: Data Quality & Quarantine</div>
+        <div class="screenshot-tag">Milestone 2</div>
+      </div>
+      <div class="screenshot-img-wrap" onclick="openModal('screenshots/02_data_quality_and_quarantine.png', 'Figure 2: Data Quality & Quarantine Engine')">
+        <img src="screenshots/02_data_quality_and_quarantine.png" alt="Data Quality Screenshot">
+      </div>
+      <div class="screenshot-desc">
+        Illustrates row-level rule validation: null checks, negative quantity/price tagging, invalid enumeration isolation, and composite failure reasons in quarantine.
+      </div>
+    </div>
+
+    <!-- Screenshot 3 -->
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+ 
