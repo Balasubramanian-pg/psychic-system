@@ -26,4 +26,15 @@ def load_config(config_path: str) -> dict:
     # Detect project root directory from config location
     config_dir = os.path.dirname(config_path)
     if os.path.basename(config_dir) == "configs":
-        base_dir = os.p
+        base_dir = os.path.dirname(config_dir)
+    else:
+        base_dir = os.getcwd()
+
+    for section in ["raw", "bronze", "quarantine", "silver", "gold"]:
+        if section in config.get("paths", {}):
+            for key, rel_path in config["paths"][section].items():
+                if not os.path.isabs(rel_path):
+                    config["paths"][section][key] = os.path.abspath(
+                        os.path.join(base_dir, rel_path)
+                    )
+    return config
