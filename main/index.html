@@ -417,4 +417,162 @@
     <!-- Screenshot 3 -->
     <div class="screenshot-card">
       <div class="screenshot-header">
- 
+        <div class="screenshot-title">Figure 3: Apache Hudi Silver UPSERT</div>
+        <div class="screenshot-tag">Milestone 3</div>
+      </div>
+      <div class="screenshot-img-wrap" onclick="openModal('screenshots/03_hudi_lakehouse_upsert.png', 'Figure 3: Apache Hudi Lakehouse Ingestion & UPSERT')">
+        <img src="screenshots/03_hudi_lakehouse_upsert.png" alt="Hudi Upsert Screenshot">
+      </div>
+      <div class="screenshot-desc">
+        Shows Commit 1 initial load, Commit 2 incremental upsert with DefaultHoodieRecordPayload, deduplication, and dynamic stock balance reconciliation.
+      </div>
+    </div>
+
+    <!-- Screenshot 4 -->
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <div class="screenshot-title">Figure 4: Time Travel & Historical Diff</div>
+        <div class="screenshot-tag">Milestone 4</div>
+      </div>
+      <div class="screenshot-img-wrap" onclick="openModal('screenshots/04_hudi_time_travel_analysis.png', 'Figure 4: Apache Hudi Time Travel & Snapshot Diff')">
+        <img src="screenshots/04_hudi_time_travel_analysis.png" alt="Time Travel Screenshot">
+      </div>
+      <div class="screenshot-desc">
+        Demonstrates historical point-in-time snapshot queries using <code>as.of.instant</code> across commit timestamps, diff audits, and late-arriving event handling.
+      </div>
+    </div>
+
+    <!-- Screenshot 5 -->
+    <div class="screenshot-card" style="grid-column: 1 / -1;">
+      <div class="screenshot-header">
+        <div class="screenshot-title">Figure 5: Gold Consumption Layer Analytics</div>
+        <div class="screenshot-tag">Milestone 5</div>
+      </div>
+      <div class="screenshot-img-wrap" onclick="openModal('screenshots/05_gold_consumption_analytics.png', 'Figure 5: Gold Consumption Layer Analytics')">
+        <img src="screenshots/05_gold_consumption_analytics.png" alt="Consumption Analytics Screenshot">
+      </div>
+      <div class="screenshot-desc">
+        Shows execution and console display of all 6 required business queries (orders by status, net paid revenue, top SKUs, critical low stock, paid unshipped orders, warehouse movement breakdown).
+      </div>
+    </div>
+  </div>
+
+  <!-- Hudi Silver Tables Inspection -->
+  <h2 class="section-title" id="hudi">
+    ⚡ Live Silver Hudi Tables Inspection
+  </h2>
+  <p style="color:var(--text-muted); margin-bottom: 1rem;">
+    The actual files generated on disk by Apache Hudi in <code>processed/silver/</code>:
+  </p>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Table Name</th>
+          <th>Physical Directory</th>
+          <th>Record Key (PK)</th>
+          <th>Precombine Field</th>
+          <th>Hudi Metadata (.hoodie)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>orders_hudi</strong></td>
+          <td><code>processed/silver/orders/</code></td>
+          <td><code>order_id</code></td>
+          <td><code>ordering_key</code></td>
+          <td><span style="color:var(--green)">✓ 2 Commits + hoodie.properties</span></td>
+        </tr>
+        <tr>
+          <td><strong>inventory_hudi</strong></td>
+          <td><code>processed/silver/inventory/</code></td>
+          <td><code>product_id</code></td>
+          <td><code>ordering_key</code></td>
+          <td><span style="color:var(--green)">✓ 2 Commits + hoodie.properties</span></td>
+        </tr>
+        <tr>
+          <td><strong>inventory_movements_hudi</strong></td>
+          <td><code>processed/silver/inventory_movements/</code></td>
+          <td><code>movement_id</code></td>
+          <td><code>ordering_key</code></td>
+          <td><span style="color:var(--green)">✓ 1 Commit + hoodie.properties</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Gold Analytical Results -->
+  <h2 class="section-title" id="gold">
+    📊 Gold Layer Analytical Results (Query Outputs)
+  </h2>
+  
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <div>
+      <h3 style="font-size:1.1rem; margin-bottom: 0.75rem; color:#93c5fd;">1. Orders Grouped by Status</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Order Status</th>
+              <th>Total Orders</th>
+              <th>Units Ordered</th>
+              <th>Gross Value ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>DELIVERED</td><td>283</td><td>878</td><td>$555,280.54</td></tr>
+            <tr><td>CONFIRMED</td><td>229</td><td>704</td><td>$425,447.62</td></tr>
+            <tr><td>SHIPPED</td><td>224</td><td>684</td><td>$410,818.13</td></tr>
+            <tr><td>PLACED</td><td>199</td><td>588</td><td>$362,229.89</td></tr>
+            <tr style="color:var(--red);"><td>CANCELLED</td><td>120</td><td>396</td><td>$251,116.02</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="font-size:1.1rem; margin-bottom: 0.75rem; color:#93c5fd;">2. Revenue from Paid Orders (Excl. Cancelled)</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Paid Orders Count</td><td><strong>573 orders</strong></td></tr>
+            <tr><td>Paid Units Sold</td><td><strong>1,743 units</strong></td></tr>
+            <tr><td>Total Paid Revenue</td><td><strong style="color:var(--green); font-size:1.1rem;">$1,041,627.14</strong></td></tr>
+            <tr><td>Average Order Value (AOV)</td><td><strong>$1,817.85</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Modal -->
+<div class="modal" id="imageModal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <span class="modal-close" onclick="closeModal()">&times;</span>
+    <img id="modalImg" src="" alt="Enlarged screenshot">
+  </div>
+</div>
+
+<script>
+  function openModal(src, title) {
+    document.getElementById('modalImg').src = src;
+    document.getElementById('imageModal').classList.add('active');
+  }
+  function closeModal() {
+    document.getElementById('imageModal').classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
+
+</body>
+</html>
