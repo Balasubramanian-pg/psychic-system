@@ -1,3 +1,5 @@
 movement_type,total_movement_events,distinct_products_affected,total_units_moved
 PURCHASE,158,97,1647
-RE
+RESTOCK,50,43,519
+DAMAGE,48,43,467
+RETURN,44,36,462
