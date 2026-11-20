@@ -30,4 +30,19 @@ Write-Host ""
 Write-Host "=================================================================" -ForegroundColor Cyan
 Write-Host ">>> STEP 3: Lakehouse Initial Ingestion & Incremental UPSERT" -ForegroundColor Green
 Write-Host "=================================================================" -ForegroundColor Cyan
-& $pyExe src/lakehouse_implementation.py --config conf
+& $pyExe src/lakehouse_implementation.py --config configs/ecommerce_prod.yml
+
+Write-Host ""
+Write-Host "=================================================================" -ForegroundColor Cyan
+Write-Host ">>> STEP 4: Time Travel & Historical Diff Analysis" -ForegroundColor Green
+Write-Host "=================================================================" -ForegroundColor Cyan
+& $pyExe src/time_travel.py --config configs/ecommerce_prod.yml
+
+Write-Host ""
+Write-Host "=================================================================" -ForegroundColor Cyan
+Write-Host ">>> STEP 5: Gold Consumption Layer Analytics" -ForegroundColor Green
+Write-Host "=================================================================" -ForegroundColor Cyan
+& $pyExe src/consumption_analytics.py --config configs/ecommerce_prod.yml
+
+Write-Host ""
+Write-Host ">>> ALL PIPELINE STAGES COMPLETED SUCCESSFULLY!" -ForegroundColor Green
