@@ -92,4 +92,42 @@ def run_time_travel(config_path: str) -> None:
             F.col("hist.updated_at").alias("historical_updated_at"),
             F.col("curr.updated_at").alias("current_updated_at"),
             F.col("hist.event_sequence").alias("hist_seq"),
-          
+            F.col("curr.event_sequence").alias("curr_seq"),
+        )
+        .orderBy("order_id")
+    )
+
+    diff_count = diff_df.count()
+    print(f"\n{'=' * 80}")
+    print(f"[STATE CHANGES DETECTED] Total Orders Modified Between Commit 1 and 2: {diff_count}")
+    print(f"{'=' * 80}")
+    diff_df.show(20, truncate=False)
+
+    # 2. Showcase newly inserted orders that were introduced in Commit 2
+    new_orders_df = current_df.join(historical_df, on="order_id", how="left_anti")
+    print(f"\n[NEWLY INSERTED ORDERS IN COMMIT 2] Total: {new_orders_df.count()}")
+    new_orders_df.select(
+        "order_id", "customer_id", "product_id", "order_status", "payment_status", "order_date", "updated_at"
+    ).show(10, truncate=False)
+
+    # 3. Specific demonstration of Order Status and Payment Status transitions
+    print(f"\n[FOCUSED TRANSITION SAMPLES] Demonstrating specific status updates:")
+    sample_orders = diff_df.limit(5).collect()
+    for row in sample_orders:
+        print(f" * Order {row['order_id']}:")
+        print(f"    - Order Status:   {row['historical_order_status']} -> {row['current_order_status']}")
+        print(f"    - Payment Status: {row['historical_payment_status']} -> {row['current_payment_status']}")
+        print(f"    - Sequence:       {row['hist_seq']} -> {row['curr_seq']}")
+        print(f"    - Updated At:     {row['historical_updated_at']} -> {row['current_updated_at']}")
+
+    print("\n>>> Time Travel & Historical Analysis Complete.")
+    spark.stop()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Apache Hudi Time Travel Analysis")
+    parser.add_argument(
+        "--config", default="configs/ecommerce_prod.yml", help="Path to YAML config"
+    )
+    args = parser.parse_args()
+    run_time_travel(args.config)
