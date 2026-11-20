@@ -11,4 +11,16 @@ def get_spark_session(app_name: str) -> SparkSession:
         os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
     builder = (
-        S
+        SparkSession.builder.appName(app_name)
+        .master("local[*]")
+        .config(
+            "spark.jars.packages",
+            "org.apache.hudi:hudi-spark3.5-bundle_2.12:0.15.0",
+        )
+        .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+        .config(
+            "spark.sql.extensions",
+            "org.apache.spark.sql.hudi.HoodieSparkSessionExtension",
+        )
+        .config(
+            "spark
