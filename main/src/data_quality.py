@@ -235,4 +235,117 @@ def validate_movements(df: DataFrame, rules: dict) -> Tuple[DataFrame, DataFrame
             F.lit("quantity <= 0 or non-numeric"),
         ),
         F.when(
-            F.c
+            F.col("movement_type_clean").isNull()
+            | (~F.col("movement_type_clean").isin(valid_movement_types)),
+            F.lit("Invalid movement_type"),
+        ),
+        F.when(F.col("movement_date_clean").isNull(), F.lit("Invalid movement_date timestamp")),
+        F.when(F.col("updated_at_clean").isNull(), F.lit("Invalid updated_at timestamp")),
+        F.when(
+            F.col("event_sequence_clean").isNull() | (F.col("event_sequence_clean") < 0),
+            F.lit("Invalid event_sequence"),
+        ),
+    ]
+
+    evaluated = staged.withColumn("dq_failure_reason", F.concat_ws(" | ", *dq_checks))
+
+    quarantine_df = (
+        evaluated.filter(F.col("dq_failure_reason") != "")
+        .select(
+            "movement_id",
+            "product_id",
+            "movement_type",
+            "quantity",
+            "movement_date",
+            "updated_at",
+            "event_sequence",
+            "_ingestion_timestamp",
+            "_batch_id",
+            "dq_failure_reason",
+        )
+        .withColumn("_quarantined_at", F.current_timestamp())
+    )
+
+    valid_df = (
+        evaluated.filter(F.col("dq_failure_reason") == "")
+        .select(
+            F.col("movement_id_clean").alias("movement_id"),
+            F.col("product_id_clean").alias("product_id"),
+            F.col("movement_type_clean").alias("movement_type"),
+            F.col("quantity_clean").alias("quantity"),
+            F.col("movement_date_clean").alias("movement_date"),
+            F.col("updated_at_clean").alias("updated_at"),
+            F.col("event_sequence_clean").alias("event_sequence"),
+        )
+        .withColumn(
+            "ordering_key",
+            F.col("event_sequence").cast("long") * F.lit(10000000000)
+            + F.col("updated_at").cast("long"),
+        )
+    )
+
+    w = Window.partitionBy("movement_id").orderBy(F.col("ordering_key").desc())
+    valid_dedup_df = (
+        valid_df.withColumn("_rn", F.row_number().over(w))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
+
+    return valid_dedup_df, quarantine_df
+
+
+def run_quality_checks(config_path: str) -> None:
+    config = load_config(config_path)
+    spark = get_spark_session("Ecommerce_Data_Quality")
+
+    bronze = config["paths"]["bronze"]
+    quarantine = config["paths"]["quarantine"]
+    rules = config["validation_rules"]
+
+    print(f"\n{'=' * 75}")
+    print(">>> Starting Data Quality & Quarantine Validation Pipeline...")
+    print(f"{'=' * 75}")
+
+    # 1. Orders Initial
+    v_ord_init, q_ord_init = validate_orders(spark.read.parquet(bronze["orders_initial"]), rules)
+    q_ord_init.write.mode("overwrite").parquet(quarantine["orders_initial"])
+    print(f"[ORDERS INITIAL] Valid Deduped: {v_ord_init.count()} | Quarantined: {q_ord_init.count()}")
+    if q_ord_init.count() > 0:
+        print("[SAMPLE QUARANTINE - ORDERS INITIAL]:")
+        q_ord_init.select("order_id", "quantity", "unit_price", "order_status", "dq_failure_reason").show(5, truncate=False)
+
+    # 2. Orders Updates
+    v_ord_upd, q_ord_upd = validate_orders(spark.read.parquet(bronze["orders_updates"]), rules)
+    q_ord_upd.write.mode("overwrite").parquet(quarantine["orders_updates"])
+    print(f"[ORDERS UPDATES] Valid Deduped: {v_ord_upd.count()} | Quarantined: {q_ord_upd.count()}")
+    if q_ord_upd.count() > 0:
+        print("[SAMPLE QUARANTINE - ORDERS UPDATES]:")
+        q_ord_upd.select("order_id", "quantity", "unit_price", "order_status", "dq_failure_reason").show(5, truncate=False)
+
+    # 3. Inventory Initial
+    v_inv_init, q_inv_init = validate_inventory(spark.read.parquet(bronze["inventory_initial"]), rules)
+    q_inv_init.write.mode("overwrite").parquet(quarantine["inventory_initial"])
+    print(f"[INVENTORY INITIAL] Valid Deduped: {v_inv_init.count()} | Quarantined: {q_inv_init.count()}")
+    if q_inv_init.count() > 0:
+        print("[SAMPLE QUARANTINE - INVENTORY INITIAL]:")
+        q_inv_init.select("product_id", "category", "available_quantity", "dq_failure_reason").show(5, truncate=False)
+
+    # 4. Inventory Movements
+    v_mov, q_mov = validate_movements(spark.read.parquet(bronze["inventory_movements"]), rules)
+    q_mov.write.mode("overwrite").parquet(quarantine["inventory_movements"])
+    print(f"[INVENTORY MOVEMENTS] Valid Deduped: {v_mov.count()} | Quarantined: {q_mov.count()}")
+    if q_mov.count() > 0:
+        print("[SAMPLE QUARANTINE - INVENTORY MOVEMENTS]:")
+        q_mov.select("movement_id", "product_id", "movement_type", "quantity", "dq_failure_reason").show(5, truncate=False)
+
+    print("\n>>> Data Quality & Quarantine Pipeline Complete.")
+    spark.stop()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Data Quality & Quarantine Pipeline")
+    parser.add_argument(
+        "--config", default="configs/ecommerce_prod.yml", help="Path to YAML config"
+    )
+    args = parser.parse_args()
+    run_quality_checks(args.config)
