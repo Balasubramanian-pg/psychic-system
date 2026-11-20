@@ -23,4 +23,15 @@ def get_spark_session(app_name: str) -> SparkSession:
             "org.apache.spark.sql.hudi.HoodieSparkSessionExtension",
         )
         .config(
-            "spark
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.hudi.catalog.HoodieCatalog",
+        )
+        .config("spark.kryo.registrator", "org.apache.spark.HoodieSparkKryoRegistrar")
+        .config("spark.sql.shuffle.partitions", "2")
+        .config("spark.sql.session.timeZone", "UTC")
+        .config("spark.driver.memory", "2g")
+    )
+
+    spark = builder.getOrCreate()
+    spark.sparkContext.setLogLevel("WARN")
+    return spark
