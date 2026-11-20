@@ -114,4 +114,125 @@ def validate_orders(df: DataFrame, rules: dict) -> Tuple[DataFrame, DataFrame]:
         .withColumn(
             "ordering_key",
             F.col("event_sequence").cast("long") * F.lit(10000000000)
-            + F.col("updated_at").
+            + F.col("updated_at").cast("long"),
+        )
+    )
+
+    # Intra-batch deduplication: keep highest ordering_key per order_id
+    w = Window.partitionBy("order_id").orderBy(F.col("ordering_key").desc())
+    valid_dedup_df = (
+        valid_df.withColumn("_rn", F.row_number().over(w))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
+
+    return valid_dedup_df, quarantine_df
+
+
+def validate_inventory(df: DataFrame, rules: dict) -> Tuple[DataFrame, DataFrame]:
+    """Cleans, casts, validates rules, quarantines invalid rows, and deduplicates valid inventory rows."""
+    valid_categories = rules.get("valid_categories", [
+        "APPAREL", "ELECTRONICS", "SPORTS", "HOME", "BOOKS"
+    ])
+
+    staged = (
+        df.withColumn("product_id_clean", standardize_string("product_id", uppercase=True))
+        .withColumn("product_name_clean", standardize_string("product_name", uppercase=False))
+        .withColumn("category_clean", standardize_string("category", uppercase=True))
+        .withColumn("available_quantity_clean", F.col("available_quantity").cast("int"))
+        .withColumn("warehouse_id_clean", standardize_string("warehouse_id", uppercase=True))
+        .withColumn("updated_at_clean", parse_timestamp_safe("updated_at"))
+        .withColumn("event_sequence_clean", F.col("event_sequence").cast("int"))
+    )
+
+    dq_checks = [
+        F.when(F.col("product_id_clean").isNull(), F.lit("product_id IS NULL")),
+        F.when(
+            F.col("available_quantity_clean").isNull()
+            | (F.col("available_quantity_clean") < 0),
+            F.lit("available_quantity < 0 or non-numeric"),
+        ),
+        F.when(
+            F.col("category_clean").isNull()
+            | (~F.col("category_clean").isin(valid_categories)),
+            F.lit("Invalid category"),
+        ),
+        F.when(F.col("updated_at_clean").isNull(), F.lit("Invalid updated_at timestamp")),
+        F.when(
+            F.col("event_sequence_clean").isNull() | (F.col("event_sequence_clean") < 0),
+            F.lit("Invalid event_sequence"),
+        ),
+    ]
+
+    evaluated = staged.withColumn("dq_failure_reason", F.concat_ws(" | ", *dq_checks))
+
+    quarantine_df = (
+        evaluated.filter(F.col("dq_failure_reason") != "")
+        .select(
+            "product_id",
+            "product_name",
+            "category",
+            "available_quantity",
+            "warehouse_id",
+            "updated_at",
+            "event_sequence",
+            "_ingestion_timestamp",
+            "_batch_id",
+            "dq_failure_reason",
+        )
+        .withColumn("_quarantined_at", F.current_timestamp())
+    )
+
+    valid_df = (
+        evaluated.filter(F.col("dq_failure_reason") == "")
+        .select(
+            F.col("product_id_clean").alias("product_id"),
+            F.col("product_name_clean").alias("product_name"),
+            F.col("category_clean").alias("category"),
+            F.col("available_quantity_clean").alias("available_quantity"),
+            F.col("warehouse_id_clean").alias("warehouse_id"),
+            F.col("updated_at_clean").alias("updated_at"),
+            F.col("event_sequence_clean").alias("event_sequence"),
+        )
+        .withColumn(
+            "ordering_key",
+            F.col("event_sequence").cast("long") * F.lit(10000000000)
+            + F.col("updated_at").cast("long"),
+        )
+    )
+
+    w = Window.partitionBy("product_id").orderBy(F.col("ordering_key").desc())
+    valid_dedup_df = (
+        valid_df.withColumn("_rn", F.row_number().over(w))
+        .filter(F.col("_rn") == 1)
+        .drop("_rn")
+    )
+
+    return valid_dedup_df, quarantine_df
+
+
+def validate_movements(df: DataFrame, rules: dict) -> Tuple[DataFrame, DataFrame]:
+    """Cleans, casts, validates rules, quarantines invalid rows, and deduplicates valid inventory movements."""
+    valid_movement_types = rules.get("valid_movement_types", [
+        "PURCHASE", "RETURN", "RESTOCK", "DAMAGE"
+    ])
+
+    staged = (
+        df.withColumn("movement_id_clean", standardize_string("movement_id", uppercase=True))
+        .withColumn("product_id_clean", standardize_string("product_id", uppercase=True))
+        .withColumn("movement_type_clean", standardize_string("movement_type", uppercase=True))
+        .withColumn("quantity_clean", F.col("quantity").cast("int"))
+        .withColumn("movement_date_clean", parse_timestamp_safe("movement_date"))
+        .withColumn("updated_at_clean", parse_timestamp_safe("updated_at"))
+        .withColumn("event_sequence_clean", F.col("event_sequence").cast("int"))
+    )
+
+    dq_checks = [
+        F.when(F.col("movement_id_clean").isNull(), F.lit("movement_id IS NULL")),
+        F.when(F.col("product_id_clean").isNull(), F.lit("product_id IS NULL")),
+        F.when(
+            F.col("quantity_clean").isNull() | (F.col("quantity_clean") <= 0),
+            F.lit("quantity <= 0 or non-numeric"),
+        ),
+        F.when(
+            F.c
