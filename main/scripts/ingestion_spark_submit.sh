@@ -12,3 +12,8 @@ spark-submit \
 
 echo ""
 echo "================================================================="
+echo ">>> Step 2: Running Data Quality & Quarantine Validation..."
+echo "================================================================="
+spark-submit \
+  --packages "${HUDI_PKG}" \
+  src/data_quality.py --config configs/ecommerce_prod.yml
