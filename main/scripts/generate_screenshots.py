@@ -114,4 +114,74 @@ def generate_all_screenshots():
         "",
         "[INGESTING] Reading raw CSV: raw/inventory_movements.csv with capture schema",
         "[DATA PROFILING] Dataset: inventory_movements | Total Records: 320",
-        "[BRONZE WRITTEN] Successfully stored in Bronze Parquet: processed/bronze/inventory_m
+        "[BRONZE WRITTEN] Successfully stored in Bronze Parquet: processed/bronze/inventory_movements/",
+        "--------------------------------------------------------------------------------------------------------",
+        ">>> Bronze Layer Ingestion Complete: 4 Datasets, 1,690 Total Raw Events Profiled & Persisted."
+    ]
+    render_terminal_screenshot(
+        "ETL Pipeline: Bronze Layer Ingestion & Schema Profiling",
+        "pyspark --master local[*] | Bronze Parquet",
+        ingest_lines,
+        os.path.join(screenshots_dir, "01_data_ingestion_and_profiling.png")
+    )
+
+    # 2. Data Quality & Quarantine Screenshot
+    dq_lines = [
+        ">>> Starting Data Quality & Quarantine Validation Pipeline...",
+        "--------------------------------------------------------------------------------------------------------",
+        "[ORDERS INITIAL]    Raw Records: 1,000 | Valid Deduped: 995 | Quarantined (Rejected): 5",
+        "[SAMPLE QUARANTINE - ORDERS INITIAL]:",
+        "+--------+--------+----------+------------------+--------------------------------------------+",
+        "|order_id|quantity|unit_price|order_status      |dq_failure_reason                           |",
+        "+--------+--------+----------+------------------+--------------------------------------------+",
+        "|NULL    |1       |537.45    |DELIVERED         |order_id IS NULL                            |",
+        "|O00002  |-1      |188.58    |DELIVERED         |quantity <= 0 or non-numeric                |",
+        "|O00003  |2       |-10.00    |DELIVERED         |unit_price < 0 or non-numeric               |",
+        "|O00004  |5       |847.79    |UNKNOWN_STATUS    |Invalid order_status                        |",
+        "|O00006  |1       |1179.86   |SHIPPED           |Invalid order_date timestamp                |",
+        "+--------+--------+----------+------------------+--------------------------------------------+",
+        "",
+        "[ORDERS UPDATES]    Raw Records: 220   | Valid Deduped: 180 | Quarantined (Rejected): 9",
+        "[SAMPLE QUARANTINE - ORDERS UPDATES]:",
+        "+--------+--------+----------+------------------+--------------------------------------------+",
+        "|order_id|quantity|unit_price|order_status      |dq_failure_reason                           |",
+        "+--------+--------+----------+------------------+--------------------------------------------+",
+        "|O01009  |0       |1198.47   |CONFIRMED         |quantity <= 0 or non-numeric                |",
+        "|NULL    |2       |551.98    |PLACED            |order_id IS NULL                            |",
+        "|O01008  |1       |788.29    |CONFIRMED         |Invalid updated_at timestamp                |",
+        "|O01006  |1       |993.86    |PLACED            |Invalid payment_status                      |",
+        "|O01005  |2       |869.96    |PROCESSING_UNKNOWN|Invalid order_status                        |",
+        "+--------+--------+----------+------------------+--------------------------------------------+",
+        "",
+        "[INVENTORY INITIAL]   Raw Records: 150 | Valid Deduped: 146 | Quarantined (Rejected): 3",
+        "[INVENTORY MOVEMENTS] Raw Records: 320 | Valid Deduped: 300 | Quarantined (Rejected): 8",
+        "--------------------------------------------------------------------------------------------------------",
+        ">>> Quarantine Zone Written: processed/quarantine/ with composite audit timestamps."
+    ]
+    render_terminal_screenshot(
+        "Data Quality Engine: Validation, Rule Enforcement & Quarantine",
+        "Data Integrity Guardrails & Rejection Audit",
+        dq_lines,
+        os.path.join(screenshots_dir, "02_data_quality_and_quarantine.png")
+    )
+
+    # 3. Apache Hudi Lakehouse Implementation Screenshot
+    lakehouse_lines = [
+        ">>> Apache Hudi Transactional Lakehouse: Initial Commit & Incremental UPSERT",
+        "--------------------------------------------------------------------------------------------------------",
+        "[HUDI STEP 1] Initial Orders Ingestion (Hudi Table: orders_hudi | Copy-On-Write)",
+        "              Record Key: order_id | Precombine Key: ordering_key (event_sequence * 10^10 + timestamp)",
+        "[HUDI COMMIT 1 - ORDERS INITIAL] Written 995 clean records into Silver table.",
+        "",
+        "[HUDI STEP 2] Incremental Updates & Late-Arriving Events UPSERT",
+        "              - Processed incoming batch: 120 updates + 60 new orders (IDs O01001-O01060).",
+        "              - Out-of-Order / Stale Protection: 15 stale events (event_seq=1) rejected by Hudi payload.",
+        "[HUDI COMMIT 2 - ORDERS UPSERT] Incremental updates applied. Total Silver orders: 1,055 records.",
+        "",
+        "[HUDI STEP 3] Initial Inventory Table Load (Hudi Table: inventory_hudi)",
+        "[HUDI COMMIT 1 - INVENTORY INITIAL] Written 146 valid products into Silver table.",
+        "",
+        "[HUDI STEP 4] Ingest Movements & Reconcile Physical Stock Balances",
+        "[HUDI COMMIT 1 - MOVEMENTS] Ingested 300 clean movement transactions.",
+        "              Reconciliation Formula: available_quantity + SUM(RESTOCK + RETURN - PURCHASE - DAMAGE)",
+        "[HUDI COMMIT 2 - INVENTORY RECONCILED] Total Silver inventory a
