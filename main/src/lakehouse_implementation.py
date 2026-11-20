@@ -121,4 +121,79 @@ def run_lakehouse_pipeline(config_path: str, reset_silver: bool = True) -> None:
     stock_deltas = (
         committed_movements.withColumn(
             "signed_qty",
-            F.when(F.col("movement_type").isin("RESTOCK", "RETURN
+            F.when(F.col("movement_type").isin("RESTOCK", "RETURN"), F.col("quantity"))
+            .when(F.col("movement_type").isin("PURCHASE", "DAMAGE"), -F.col("quantity"))
+            .otherwise(F.lit(0)),
+        )
+        .groupBy("product_id")
+        .agg(
+            F.sum("signed_qty").alias("net_qty_change"),
+            F.max("updated_at").alias("latest_mov_updated_at"),
+            F.max("event_sequence").alias("latest_mov_seq"),
+        )
+    )
+
+    current_inventory = read_hudi_table(spark, silver["inventory"]).select(
+        "product_id",
+        "product_name",
+        "category",
+        "available_quantity",
+        "warehouse_id",
+        "updated_at",
+        "event_sequence",
+    )
+
+    reconciled_inventory = (
+        current_inventory.join(stock_deltas, on="product_id", how="left")
+        .withColumn(
+            "net_qty_change",
+            F.coalesce(F.col("net_qty_change"), F.lit(0)),
+        )
+        .withColumn(
+            "available_quantity",
+            F.greatest(F.lit(0), F.col("available_quantity") + F.col("net_qty_change")),
+        )
+        .withColumn(
+            "updated_at",
+            F.coalesce(F.col("latest_mov_updated_at"), F.col("updated_at")),
+        )
+        .withColumn(
+            "event_sequence",
+            F.greatest(F.col("event_sequence"), F.coalesce(F.col("latest_mov_seq"), F.lit(0))) + F.lit(1),
+        )
+        .withColumn(
+            "ordering_key",
+            F.col("event_sequence").cast("long") * F.lit(10000000000)
+            + F.col("updated_at").cast("long"),
+        )
+        .select(
+            "product_id",
+            "product_name",
+            "category",
+            "available_quantity",
+            "warehouse_id",
+            "updated_at",
+            "event_sequence",
+            "ordering_key",
+        )
+    )
+
+    # Commit reconciled inventory update as Hudi Commit 2
+    write_hudi_table(reconciled_inventory, silver["inventory"], inv_init_opts, mode="append")
+    commit2_inv = read_hudi_table(spark, silver["inventory"])
+    print(f"[HUDI COMMIT 2 - INVENTORY RECONCILED] Total Silver inventory after movements: {commit2_inv.count()}")
+
+    print("\n>>> Lakehouse Ingestion & UPSERT Implementation Complete.")
+    spark.stop()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Apache Hudi Lakehouse Implementation")
+    parser.add_argument(
+        "--config", default="configs/ecommerce_prod.yml", help="Path to YAML config"
+    )
+    parser.add_argument(
+        "--no-reset", action="store_true", help="Do not clear existing Silver tables"
+    )
+    args = parser.parse_args()
+    run_lakehouse_pipeline(args.config, reset_silver=(not args.no_reset))
