@@ -118,4 +118,72 @@ def run_analytics(config_path: str) -> None:
         .select(
             "product_id",
             "product_name",
-           
+            "category",
+            "warehouse_id",
+            "available_quantity",
+            "updated_at",
+        )
+        .orderBy(F.col("available_quantity").asc())
+    )
+    write_gold_csv(
+        low_stock,
+        gold["low_stock_products"],
+        f"4. Low Stock Products (Available Quantity <= {low_stock_threshold} units)",
+    )
+
+    # -------------------------------------------------------------------------
+    # 5. Orders where payment is completed but shipping has not started
+    # -------------------------------------------------------------------------
+    paid_unshipped = (
+        orders_df.filter(
+            (F.col("payment_status") == "PAID")
+            & (F.col("order_status").isin("PLACED", "CONFIRMED"))
+        )
+        .select(
+            "order_id",
+            "customer_id",
+            "product_id",
+            "quantity",
+            "unit_price",
+            "order_status",
+            "payment_status",
+            "order_date",
+            "updated_at",
+        )
+        .orderBy("order_date")
+    )
+    write_gold_csv(
+        paid_unshipped,
+        gold["paid_unshipped_orders"],
+        "5. Orders Paid but Shipping Not Started (Status: PLACED / CONFIRMED)",
+    )
+
+    # -------------------------------------------------------------------------
+    # 6. Inventory movement summary grouped by movement type
+    # -------------------------------------------------------------------------
+    movement_summary = (
+        movements_df.groupBy("movement_type")
+        .agg(
+            F.count("movement_id").alias("total_movement_events"),
+            F.countDistinct("product_id").alias("distinct_products_affected"),
+            F.sum("quantity").alias("total_units_moved"),
+        )
+        .orderBy(F.col("total_units_moved").desc())
+    )
+    write_gold_csv(
+        movement_summary,
+        gold["inventory_movement_summary"],
+        "6. Inventory Movement Summary Grouped by Movement Type",
+    )
+
+    print("\n>>> Gold Layer Analytics Generation Complete.")
+    spark.stop()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Gold Layer Consumption & Analytics")
+    parser.add_argument(
+        "--config", default="configs/ecommerce_prod.yml", help="Path to YAML config"
+    )
+    args = parser.parse_args()
+    run_analytics(args.config)
