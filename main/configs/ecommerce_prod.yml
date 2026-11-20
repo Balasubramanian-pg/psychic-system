@@ -1,0 +1,20 @@
+project:
+  name: "ecommerce_lakehouse"
+  environment: "prod"
+
+paths:
+  raw:
+    orders_initial: "raw/orders_initial.csv"
+    orders_updates: "raw/orders_updates.csv"
+    inventory_initial: "raw/inventory_initial.csv"
+    inventory_movements: "raw/inventory_movements.csv"
+  bronze:
+    orders_initial: "processed/bronze/orders_initial/"
+    orders_updates: "processed/bronze/orders_updates/"
+    inventory_initial: "processed/bronze/inventory_initial/"
+    inventory_movements: "processed/bronze/inventory_movements/"
+  quarantine:
+    orders_initial: "processed/quarantine/orders_initial/"
+    orders_updates: "processed/quarantine/orders_updates/"
+    inventory_initial: "processed/quarantine/inventory_initial/"
+    inventory_move
