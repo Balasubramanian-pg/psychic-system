@@ -16,4 +16,10 @@ spark-submit \
 echo ""
 echo "================================================================="
 echo ">>> Step 4: Running Hudi Time Travel & Historical Diff Analysis..."
-echo
+echo "================================================================="
+spark-submit \
+  --packages "${HUDI_PKG}" \
+  --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
+  --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.hudi.catalog.HoodieCatalog" \
+  --conf "spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension" \
+  src/time_travel.py --config configs/ecommerce_prod.yml
