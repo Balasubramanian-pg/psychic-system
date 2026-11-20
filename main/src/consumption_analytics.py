@@ -59,3 +59,63 @@ def run_analytics(config_path: str) -> None:
     )
 
     # -------------------------------------------------------------------------
+    # 2. Total revenue from successfully paid orders (excluding CANCELLED)
+    # -------------------------------------------------------------------------
+    revenue_paid = (
+        orders_df.filter(
+            (F.col("payment_status") == "PAID") & (F.col("order_status") != "CANCELLED")
+        )
+        .agg(
+            F.count("order_id").alias("paid_orders_count"),
+            F.sum("quantity").alias("paid_units_sold"),
+            F.round(F.sum(F.col("quantity") * F.col("unit_price")), 2).alias("total_paid_revenue"),
+            F.round(F.avg(F.col("quantity") * F.col("unit_price")), 2).alias("average_order_value"),
+        )
+    )
+    write_gold_csv(
+        revenue_paid,
+        gold["revenue_paid_orders"],
+        "2. Total Revenue from Successfully Paid Orders (Excl. Cancelled)",
+    )
+
+    # -------------------------------------------------------------------------
+    # 3. Products with the highest order quantities
+    # -------------------------------------------------------------------------
+    top_products = (
+        orders_df.filter(F.col("order_status") != "CANCELLED")
+        .groupBy("product_id")
+        .agg(
+            F.sum("quantity").alias("total_ordered_quantity"),
+            F.count("order_id").alias("order_count"),
+            F.round(F.sum(F.col("quantity") * F.col("unit_price")), 2).alias("total_sales_amount"),
+        )
+        .join(
+            inventory_df.select("product_id", "product_name", "category"),
+            on="product_id",
+            how="left",
+        )
+        .select(
+            "product_id",
+            "product_name",
+            "category",
+            "total_ordered_quantity",
+            "order_count",
+            "total_sales_amount",
+        )
+        .orderBy(F.col("total_ordered_quantity").desc())
+    )
+    write_gold_csv(
+        top_products,
+        gold["top_ordered_products"],
+        "3. Products with Highest Order Quantities",
+    )
+
+    # -------------------------------------------------------------------------
+    # 4. Products with low available inventory
+    # -------------------------------------------------------------------------
+    low_stock = (
+        inventory_df.filter(F.col("available_quantity") <= low_stock_threshold)
+        .select(
+            "product_id",
+            "product_name",
+           
