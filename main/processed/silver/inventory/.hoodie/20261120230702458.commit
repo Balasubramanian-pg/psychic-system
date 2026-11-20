@@ -1,0 +1,19 @@
+{
+  "partitionToWriteStats" : {
+    "" : [ {
+      "fileId" : "9dc4b4f1-d0a5-44dd-8284-007210c78c60-0",
+      "path" : "9dc4b4f1-d0a5-44dd-8284-007210c78c60-0_0-142-119_20261120230702458.parquet",
+      "cdcStats" : null,
+      "prevCommit" : "20261120230651809",
+      "numWrites" : 146,
+      "numDeletes" : 0,
+      "numUpdateWrites" : 146,
+      "numInserts" : 0,
+      "totalWriteBytes" : 439798,
+      "totalWriteErrors" : 0,
+      "tempPath" : null,
+      "partitionPath" : "",
+      "totalLogRecords" : 0,
+      "totalLogFilesCompacted" : 0,
+      "totalLogSizeCompacted" : 0,
+      "tota
