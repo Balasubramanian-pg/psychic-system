@@ -17,4 +17,17 @@ $env:PYSPARK_DRIVER_PYTHON = $pyExe
 
 Write-Host "=================================================================" -ForegroundColor Cyan
 Write-Host ">>> STEP 1: Bronze Data Ingestion" -ForegroundColor Green
-Write-Host "==============================
+Write-Host "=================================================================" -ForegroundColor Cyan
+& $pyExe src/data_ingestion.py --config configs/ecommerce_prod.yml
+
+Write-Host ""
+Write-Host "=================================================================" -ForegroundColor Cyan
+Write-Host ">>> STEP 2: Data Quality & Quarantine Validation" -ForegroundColor Green
+Write-Host "=================================================================" -ForegroundColor Cyan
+& $pyExe src/data_quality.py --config configs/ecommerce_prod.yml
+
+Write-Host ""
+Write-Host "=================================================================" -ForegroundColor Cyan
+Write-Host ">>> STEP 3: Lakehouse Initial Ingestion & Incremental UPSERT" -ForegroundColor Green
+Write-Host "=================================================================" -ForegroundColor Cyan
+& $pyExe src/lakehouse_implementation.py --config conf
