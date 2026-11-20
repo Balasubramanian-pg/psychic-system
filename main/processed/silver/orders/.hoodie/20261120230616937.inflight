@@ -1,0 +1,12 @@
+{
+  "partitionToWriteStats" : {
+    "" : [ {
+      "fileId" : "",
+      "path" : null,
+      "cdcStats" : null,
+      "prevCommit" : "null",
+      "numWrites" : 0,
+      "numDeletes" : 0,
+      "numUpdateWrites" : 0,
+      "numInserts" : 995,
+      "totalWriteBytes"
