@@ -49,4 +49,47 @@ def run_time_travel(config_path: str) -> None:
 
     if len(commits) < 2:
         print("[ERROR] At least 2 commits are required for Time Travel demonstration.")
-        print("Plea
+        print("Please run lakehouse_implementation.py first to create Commit 1 and Commit 2.")
+        spark.stop()
+        return
+
+    commit1_instant = commits[0]
+    commit2_instant = commits[-1]
+
+    print(f"\n>>> Querying Historical Snapshot @ Commit 1 (Instant: {commit1_instant})...")
+    historical_df = (
+        spark.read.format("hudi")
+        .option("as.of.instant", commit1_instant)
+        .load(orders_uri)
+    )
+    hist_count = historical_df.count()
+
+    print(f">>> Querying Current Table State @ Commit 2 (Instant: {commit2_instant})...")
+    current_df = (
+        spark.read.format("hudi")
+        .load(orders_uri)
+    )
+    curr_count = current_df.count()
+
+    print(f"\n[TABLE ROW COUNTS]")
+    print(f" - Historical Snapshot (Commit 1 @ {commit1_instant}): {hist_count} records")
+    print(f" - Current Table State (Commit 2 @ {commit2_instant}): {curr_count} records")
+
+    # 1. Orders whose order_status or payment_status changed
+    diff_df = (
+        historical_df.alias("hist")
+        .join(current_df.alias("curr"), on="order_id", how="inner")
+        .filter(
+            (F.col("hist.order_status") != F.col("curr.order_status"))
+            | (F.col("hist.payment_status") != F.col("curr.payment_status"))
+        )
+        .select(
+            F.col("order_id"),
+            F.col("hist.order_status").alias("historical_order_status"),
+            F.col("curr.order_status").alias("current_order_status"),
+            F.col("hist.payment_status").alias("historical_payment_status"),
+            F.col("curr.payment_status").alias("current_payment_status"),
+            F.col("hist.updated_at").alias("historical_updated_at"),
+            F.col("curr.updated_at").alias("current_updated_at"),
+            F.col("hist.event_sequence").alias("hist_seq"),
+          
