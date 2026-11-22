@@ -34,4 +34,23 @@
       "numUpdateWrites" : 146,
       "numInserts" : 0,
       "totalWriteBytes" : 0,
-      "totalWriteErro
+      "totalWriteErrors" : 0,
+      "tempPath" : null,
+      "partitionPath" : null,
+      "totalLogRecords" : 0,
+      "totalLogFilesCompacted" : 0,
+      "totalLogSizeCompacted" : 0,
+      "totalUpdatedRecordsCompacted" : 0,
+      "totalLogBlocks" : 0,
+      "totalCorruptLogBlock" : 0,
+      "totalRollbackBlocks" : 0,
+      "fileSizeInBytes" : 0,
+      "minEventTime" : null,
+      "maxEventTime" : null,
+      "runtimeStats" : null
+    } ]
+  },
+  "compacted" : false,
+  "extraMetadata" : { },
+  "operationType" : "UPSERT"
+}
