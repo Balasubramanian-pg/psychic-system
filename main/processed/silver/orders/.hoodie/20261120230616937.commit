@@ -18,4 +18,18 @@
       "totalLogSizeCompacted" : 0,
       "totalUpdatedRecordsCompacted" : 0,
       "totalLogBlocks" : 0,
-      "totalCorruptLogBlock" : 0,
+      "totalCorruptLogBlock" : 0,
+      "totalRollbackBlocks" : 0,
+      "fileSizeInBytes" : 466281,
+      "minEventTime" : null,
+      "maxEventTime" : null,
+      "runtimeStats" : {
+        "totalScanTime" : 0,
+        "totalUpsertTime" : 0,
+        "totalCreateTime" : 3033
+      }
+    } ]
+  },
+  "compacted" : false,
+  "extraMetadata" : {
+    "schema" : "{\"type\":\"record\",\"name\":\"orders_hudi_record\",\"namespace\":\"hoodie.orders_hudi\",\"fields\":[{\"name\":\"order_id\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"customer_id\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"product_id\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"quantity\",\"type\":
