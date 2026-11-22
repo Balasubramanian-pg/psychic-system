@@ -1,1 +1,3 @@
-movement_type,total_movement_events,distinct_products
+movement_type,total_movement_events,distinct_products_affected,total_units_moved
+PURCHASE,158,97,1647
+RE
