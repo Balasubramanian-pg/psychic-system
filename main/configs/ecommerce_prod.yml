@@ -17,4 +17,22 @@ paths:
     orders_initial: "processed/quarantine/orders_initial/"
     orders_updates: "processed/quarantine/orders_updates/"
     inventory_initial: "processed/quarantine/inventory_initial/"
-    inventory_move
+    inventory_movements: "processed/quarantine/inventory_movements/"
+  silver:
+    orders: "processed/silver/orders/"
+    inventory: "processed/silver/inventory/"
+    movements: "processed/silver/inventory_movements/"
+  gold:
+    orders_by_status: "processed/gold/orders_by_status/"
+    revenue_paid_orders: "processed/gold/revenue_paid_orders/"
+    top_ordered_products: "processed/gold/top_ordered_products/"
+    low_stock_products: "processed/gold/low_stock_products/"
+    paid_unshipped_orders: "processed/gold/paid_unshipped_orders/"
+    inventory_movement_summary: "processed/gold/inventory_movement_summary/"
+
+hudi:
+  orders:
+    table_name: "orders_hudi"
+    record_key: "order_id"
+    precombine_field: "ordering_key"
+    table_type: "COPY_ON
