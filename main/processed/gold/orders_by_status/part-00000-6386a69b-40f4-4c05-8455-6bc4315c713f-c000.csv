@@ -1,2 +1,4 @@
 order_status,total_orders,total_units_ordered,gross_order_value
-DEL
+DELIVERED,283,878,555280.54
+CONFIRMED,229,704,425447.62
+SHIPPED,224,6
