@@ -18,4 +18,15 @@
       "totalLogSizeCompacted" : 0,
       "totalUpdatedRecordsCompacted" : 0,
       "totalLogBlocks" : 0,
-      "
+      "totalCorruptLogBlock" : 0,
+      "totalRollbackBlocks" : 0,
+      "fileSizeInBytes" : 0,
+      "minEventTime" : null,
+      "maxEventTime" : null,
+      "runtimeStats" : null
+    } ]
+  },
+  "compacted" : false,
+  "extraMetadata" : { },
+  "operationType" : "UPSERT"
+}
